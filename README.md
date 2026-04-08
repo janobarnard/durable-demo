@@ -29,20 +29,20 @@ value in the **Outputs** tab.
 The deployed stack gives you a URL to a single-page web UI:
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│ Lambda Durable Functions — Live Demo                         │
-│                                                              │
-│ [ Start new order ]                                          │
-│                                                              │
-│ ① context.step("validate-order")     ✓ ran in 210 ms        │
-│ ② context.step("reserve-inventory")  ✓ ran in 220 ms        │
-│ ③ context.wait_for_callback(…)       💤 HIBERNATING for 47s │
-│      [ ✓ Approve payment ]  [ ✗ Reject ]                     │
-│ ④ context.step("fulfill-order")      ⏳ pending              │
-│                                                              │
-│ ⏱ Wall time  💻 Active compute  💤 Hibernation               │
-│    47.3 s         0.5 s               46.8 s (free)         │
-└──────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│  Lambda Durable Functions -- Live Demo                      │
+│                                                             │
+│  [ Start new order ]                                        │
+│                                                             │
+│  1. context.step("validate-order")    done  ran in 210 ms   │
+│  2. context.step("reserve-inventory") done  ran in 220 ms   │
+│  3. context.wait_for_callback(...)    HIBERNATING for 47s   │
+│       [ Approve payment ]  [ Reject ]                       │
+│  4. context.step("fulfill-order")     pending               │
+│                                                             │
+│  Wall time     Active compute     Hibernation               │
+│  47.3 s        0.5 s              46.8 s (free)             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 The three metrics at the bottom are the core teaching moment:
@@ -85,26 +85,26 @@ OrchestratorFunction  (Durable Lambda)
 ### Architecture
 
 ```
-                      ┌─────────────────────────────────────────┐
-                      │          API Gateway (REST)              │
-                      │  GET  /              (interactive UI)    │
-                      │  POST /orders                            │
-                      │  GET  /orders/{orderId}                  │
-                      │  POST /orders/{orderId}/approve          │
-                      │  POST /orders/{orderId}/reject           │
-                      └───────────────┬─────────────────────────┘
+                  ┌──────────────────────────────────────────┐
+                  │          API Gateway (REST)               │
+                  │  GET  /              (interactive UI)     │
+                  │  POST /orders                             │
+                  │  GET  /orders/{orderId}                   │
+                  │  POST /orders/{orderId}/approve           │
+                  │  POST /orders/{orderId}/reject            │
+                  └───────────────────┬──────────────────────┘
                                       │
-                          ┌───────────▼────────────┐
-                          │      ApiFunction        │
-                          │  (standard Lambda)      │
-                          └──┬──────────────────┬──┘
-                             │ async invoke     │ callback
-                    ┌────────▼──────┐    ┌──────▼──────────────┐
-                    │ Orchestrator  │    │   DynamoDB           │
-                    │ Function      │◄───│   OrdersTable        │
-                    │ (Durable)     │    │   orderId → state,   │
-                    └───────────────┘    │   timings, callbackId│
-                                         └─────────────────────┘
+                          ┌───────────▼───────────┐
+                          │     ApiFunction        │
+                          │   (standard Lambda)    │
+                          └──┬─────────────────┬──┘
+                             │ async invoke    │ callback
+                    ┌────────▼──────┐   ┌──────▼──────────────┐
+                    │  Orchestrator │   │  DynamoDB            │
+                    │  Function     │◄──│  OrdersTable         │
+                    │  (Durable)    │   │  orderId -> state,   │
+                    └───────────────┘   │  timings, callbackId │
+                                        └─────────────────────┘
 ```
 
 ### Key concepts demonstrated
