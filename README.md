@@ -85,26 +85,26 @@ OrchestratorFunction  (Durable Lambda)
 ### Architecture
 
 ```
-                  ┌──────────────────────────────────────────┐
-                  │          API Gateway (REST)               │
-                  │  GET  /              (interactive UI)     │
-                  │  POST /orders                             │
-                  │  GET  /orders/{orderId}                   │
-                  │  POST /orders/{orderId}/approve           │
-                  │  POST /orders/{orderId}/reject            │
-                  └───────────────────┬──────────────────────┘
-                                      │
-                          ┌───────────▼───────────┐
-                          │     ApiFunction        │
-                          │   (standard Lambda)    │
-                          └──┬─────────────────┬──┘
-                             │ async invoke    │ callback
-                    ┌────────▼──────┐   ┌──────▼──────────────┐
-                    │  Orchestrator │   │  DynamoDB            │
-                    │  Function     │◄──│  OrdersTable         │
-                    │  (Durable)    │   │  orderId -> state,   │
-                    └───────────────┘   │  timings, callbackId │
-                                        └─────────────────────┘
+              +------------------------------------------+
+              |          API Gateway (REST)               |
+              |  GET  /              (interactive UI)     |
+              |  POST /orders                             |
+              |  GET  /orders/{orderId}                   |
+              |  POST /orders/{orderId}/approve           |
+              |  POST /orders/{orderId}/reject            |
+              +-------------------+----------------------+
+                                  |
+                       +----------v----------+
+                       |    ApiFunction       |
+                       |  (standard Lambda)   |
+                       +--+---------------+--+
+                          | async invoke  | callback
+                 +--------v------+  +-----v-----------------+
+                 |  Orchestrator |  |  DynamoDB              |
+                 |  Function     |<-|  OrdersTable           |
+                 |  (Durable)    |  |  orderId -> state,     |
+                 +---------------+  |  timings, callbackId   |
+                                    +------------------------+
 ```
 
 ### Key concepts demonstrated
