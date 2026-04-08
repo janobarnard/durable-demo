@@ -1,0 +1,16 @@
+# SAM CLI configuration — used by `sam deploy` and `sam build`.
+# Run `sam deploy --guided` on first deploy to set your stack name and region.
+
+version = 0.1
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.deploy.parameters]
+stack_name        = "durable-functions-demo"
+region            = "us-east-1"
+resolve_s3        = true
+capabilities      = "CAPABILITY_IAM"
+confirm_changeset = true
+fail_on_empty_changeset = false

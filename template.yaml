@@ -1,0 +1,203 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Lambda Durable Functions Demo — Order Processing Workflow
+
+  Demonstrates the checkpoint-and-replay model through a realistic
+  order processing flow:
+
+    1. validate-order   (context.step)
+    2. reserve-inventory (context.step)
+    3. payment-authorization (context.wait_for_callback) ← function hibernates here
+    4. fulfill-order    (context.step)
+
+  Resources:
+    - OrchestratorFunction  Durable Lambda that owns the workflow
+    - ApiFunction           Standard Lambda: start / status / approve / reject
+    - OrdersTable           DynamoDB table shared between both functions
+    - DemoApi               REST API Gateway with four routes
+
+Globals:
+  Function:
+    Runtime: python3.14
+    MemorySize: 256
+    Timeout: 30
+
+Parameters:
+  ExecutionTimeoutSeconds:
+    Type: Number
+    Default: 600        # 10 minutes — enough for a live demo
+    MinValue: 1
+    MaxValue: 31622400  # 1 year (the maximum)
+    Description: >
+      How long the durable execution may run end-to-end (in seconds).
+      The workflow hibernates for free during wait_for_callback — only
+      active compute time is charged.
+
+  RetentionPeriodInDays:
+    Type: Number
+    Default: 7
+    MinValue: 1
+    MaxValue: 90
+    Description: >
+      How long checkpoint data is retained in the managed state store.
+
+Resources:
+
+  # ── Storage ───────────────────────────────────────────────────────────────
+  OrdersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: orderId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: orderId
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+
+  # ── IAM: Orchestrator ─────────────────────────────────────────────────────
+  OrchestratorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        # Grants: CloudWatch Logs, lambda:CheckpointDurableExecution,
+        #         lambda:GetDurableExecutionState
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicDurableExecutionRolePolicy
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource: !GetAtt OrdersTable.Arn
+
+  # ── Durable Function ──────────────────────────────────────────────────────
+  #
+  # DurableConfig enables checkpoint-and-replay for this function.
+  # Note: DurableConfig can only be set at function creation time —
+  #       it cannot be added to an existing function after deployment.
+  #
+  # Invocation requirements:
+  #   - Must use a qualified ARN: :$LATEST, :1, :prod, etc.
+  #   - Use InvocationType=Event (async) for workflows longer than 15 min.
+  #   - Pass DurableExecutionName for idempotency (same name = same execution).
+  #
+  OrchestratorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${AWS::StackName}-orchestrator'
+      CodeUri: src/orchestrator/
+      Handler: handler.lambda_handler
+      Role: !GetAtt OrchestratorRole.Arn
+      Timeout: 60
+      Environment:
+        Variables:
+          ORDERS_TABLE: !Ref OrdersTable
+      DurableConfig:
+        ExecutionTimeout: !Ref ExecutionTimeoutSeconds
+        RetentionPeriodInDays: !Ref RetentionPeriodInDays
+
+  # ── Standard API Function ─────────────────────────────────────────────────
+  #
+  # This function is NOT durable. It handles four synchronous API routes:
+  #   POST /orders                   → start a new workflow (async invoke)
+  #   GET  /orders/{orderId}         → poll DynamoDB for current status
+  #   POST /orders/{orderId}/approve → send success callback, workflow resumes
+  #   POST /orders/{orderId}/reject  → send failure callback, workflow ends
+  #
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${AWS::StackName}-api'
+      CodeUri: src/api/
+      Handler: handler.lambda_handler
+      Environment:
+        Variables:
+          ORDERS_TABLE: !Ref OrdersTable
+          ORCHESTRATOR_ARN: !GetAtt OrchestratorFunction.Arn
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OrdersTable
+        - Statement:
+            - Sid: InvokeOrchestrator
+              Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource:
+                - !GetAtt OrchestratorFunction.Arn
+                - !Sub '${OrchestratorFunction.Arn}:*'
+            - Sid: SendDurableCallbacks
+              Effect: Allow
+              Action:
+                - lambda:SendDurableExecutionCallbackSuccess
+                - lambda:SendDurableExecutionCallbackFailure
+              Resource: '*'
+      Events:
+        UiRoot:
+          Type: Api
+          Properties:
+            RestApiId: !Ref DemoApi
+            Path: /
+            Method: GET
+        PostOrder:
+          Type: Api
+          Properties:
+            RestApiId: !Ref DemoApi
+            Path: /orders
+            Method: POST
+        GetOrder:
+          Type: Api
+          Properties:
+            RestApiId: !Ref DemoApi
+            Path: /orders/{orderId}
+            Method: GET
+        ApproveOrder:
+          Type: Api
+          Properties:
+            RestApiId: !Ref DemoApi
+            Path: /orders/{orderId}/approve
+            Method: POST
+        RejectOrder:
+          Type: Api
+          Properties:
+            RestApiId: !Ref DemoApi
+            Path: /orders/{orderId}/reject
+            Method: POST
+
+  # ── API Gateway ───────────────────────────────────────────────────────────
+  DemoApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: demo
+      Description: Lambda Durable Functions demo API
+
+Outputs:
+  UiUrl:
+    Description: 👉 Open this URL in your browser to see the live interactive demo
+    Value: !Sub 'https://${DemoApi}.execute-api.${AWS::Region}.amazonaws.com/demo/'
+
+  ApiUrl:
+    Description: Base URL for the demo REST API
+    Value: !Sub 'https://${DemoApi}.execute-api.${AWS::Region}.amazonaws.com/demo'
+
+  OrchestratorArn:
+    Description: Durable orchestrator function ARN (always invoke with :$LATEST qualifier)
+    Value: !GetAtt OrchestratorFunction.Arn
+
+  OrdersTableName:
+    Description: DynamoDB table name
+    Value: !Ref OrdersTable
