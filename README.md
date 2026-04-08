@@ -28,6 +28,12 @@ value in the **Outputs** tab.
 
 The deployed stack gives you a URL to a single-page web UI:
 
+![UI waiting for payment approval](docs/ui-awaiting-payment.png)
+
+Open the Lambda console side-by-side to see the durable execution state:
+
+![AWS Console showing hibernating execution](docs/console-awaiting-payment.png)
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  Lambda Durable Functions -- Live Demo                      │
