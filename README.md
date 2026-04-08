@@ -59,6 +59,8 @@ steps it already completed.
 
 ## How it works
 
+![Architecture diagram](docs/architecture.png)
+
 ```
 POST /orders
       │

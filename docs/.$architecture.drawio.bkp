@@ -1,0 +1,97 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.2.5 Chrome/138.0.7204.251 Electron/37.6.1 Safari/537.36" version="28.2.5">
+  <diagram id="durable-demo-arch" name="Architecture">
+    <mxGraphModel dx="1643" dy="690" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="browser" value="Browser&lt;br&gt;&lt;font style=&quot;font-size:10px;color:#666&quot;&gt;Interactive UI&lt;/font&gt;" style="shape=mxgraph.aws4.client;whiteSpace=wrap;html=1;fontSize=12;fontStyle=1;fillColor=#232F3E;fontColor=#ffffff;strokeColor=none;verticalLabelPosition=bottom;verticalAlign=top;align=center;" parent="1" vertex="1">
+          <mxGeometry x="60" y="260" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="apigw" value="API Gateway&lt;br&gt;&lt;font style=&quot;font-size:10px;color:#666&quot;&gt;REST — /demo&lt;/font&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;" parent="1" vertex="1">
+          <mxGeometry x="230" y="260" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="apifn" value="ApiFunction&lt;br&gt;&lt;font style=&quot;font-size:10px;color:#666&quot;&gt;Standard Lambda&lt;br&gt;UI + REST routes&lt;/font&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" parent="1" vertex="1">
+          <mxGeometry x="430" y="260" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="orchfn" value="OrchestratorFunction&lt;br&gt;&lt;font style=&quot;font-size:10px;color:#ED7100&quot;&gt;Durable Lambda&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;color:#666&quot;&gt;Checkpoint &amp;amp; replay&lt;/font&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=#E7157B;strokeWidth=3;dashed=1;dashPattern=5 5;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" parent="1" vertex="1">
+          <mxGeometry x="430" y="80" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ddb" value="DynamoDB&lt;br&gt;&lt;font style=&quot;font-size:10px;color:#666&quot;&gt;OrdersTable&lt;br&gt;Status, timings,&lt;br&gt;callbackId&lt;/font&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#C925D1;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.dynamodb;" parent="1" vertex="1">
+          <mxGeometry x="700" y="170" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="statestore" value="Managed State Store&lt;br&gt;&lt;font style=&quot;font-size:10px;color:#666&quot;&gt;Checkpoints&lt;br&gt;(AWS-managed)&lt;/font&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.step_functions;" parent="1" vertex="1">
+          <mxGeometry x="700" y="30" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666;strokeWidth=1.5;fontSize=10;fontColor=#666;" parent="1" source="browser" target="apigw" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1label" value="HTTPS" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#666;" parent="e1" vertex="1" connectable="0">
+          <mxGeometry x="-0.1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666;strokeWidth=1.5;fontSize=10;fontColor=#666;" parent="1" source="apigw" target="apifn" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#ED7100;strokeWidth=2;dashed=1;dashPattern=8 4;fontSize=10;fontColor=#ED7100;" parent="1" source="apifn" target="orchfn" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="540" y="280" />
+              <mxPoint x="540" y="120" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e3label" value="async invoke&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;+ DurableExecutionName&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#ED7100;" parent="e3" vertex="1" connectable="0">
+          <mxGeometry x="0.1" relative="1" as="geometry">
+            <mxPoint x="-10" y="22" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#C925D1;strokeWidth=1.5;fontSize=10;fontColor=#C925D1;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" parent="1" source="apifn" target="ddb" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4label" value="read status,&lt;br&gt;get callbackId" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;fontColor=#C925D1;" parent="e4" vertex="1" connectable="0">
+          <mxGeometry x="-0.2" y="15" relative="1" as="geometry">
+            <mxPoint x="20" y="-31" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#C925D1;strokeWidth=1.5;fontSize=10;fontColor=#C925D1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" parent="1" source="orchfn" target="ddb" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5label" value="write status,&lt;br&gt;timings" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;fontColor=#C925D1;" parent="e5" vertex="1" connectable="0">
+          <mxGeometry x="-0.2" y="-15" relative="1" as="geometry">
+            <mxPoint x="20" y="31" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#ED7100;strokeWidth=1.5;fontSize=10;fontColor=#ED7100;" parent="1" source="orchfn" target="statestore" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="595" y="100" />
+              <mxPoint x="595" y="60" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6label" value="checkpoints" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;fontColor=#ED7100;" parent="e6" vertex="1" connectable="0">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4ade80;strokeWidth=2;dashed=1;dashPattern=8 4;fontSize=10;fontColor=#4ade80;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="apifn" target="orchfn" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="380" y="230" />
+              <mxPoint x="380" y="110" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7label" value="callback&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;approve / reject&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#4ade80;" parent="e7" vertex="1" connectable="0">
+          <mxGeometry x="0.1" relative="1" as="geometry">
+            <mxPoint y="24" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="note" value="&lt;font style=&quot;font-size:11px&quot;&gt;① validate-order → ② reserve-inventory → ③ &lt;b&gt;wait_for_callback&lt;/b&gt;&amp;nbsp;→ ④ fulfill-order&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#666;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="190" y="390" width="600" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
