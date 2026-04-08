@@ -467,6 +467,10 @@ UI_HTML = r"""<!DOCTYPE html>
     stays flat while <strong>wall time</strong> keeps climbing — that gap is zero-cost
     hibernation. Click <em>Approve</em> to wake it up and watch it resume from
     exactly where it left off.
+    <br><br>
+    <strong>💡 Tip:</strong> Open the Lambda console side-by-side
+    (<em>Functions → durable-functions-demo-orchestrator → Durable executions</em>)
+    and watch the execution state change in real time as you interact with the buttons here.
   </div>
 
   <div class="panel">
